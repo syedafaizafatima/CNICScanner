@@ -30,7 +30,7 @@ fun PreviewScreen(
     val context = LocalContext.current
     var isProcessing by remember { mutableStateOf(false) }
     var isSaved by remember { mutableStateOf(false) }
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -53,17 +53,17 @@ fun PreviewScreen(
                     tint = Color.White
                 )
             }
-            
+
             Text(
                 text = "CNIC Preview",
                 color = Color.White,
                 style = MaterialTheme.typography.headlineSmall
             )
-            
+
             // Placeholder for symmetry
             Box(modifier = Modifier.size(48.dp))
         }
-        
+
         // Image Preview
         Card(
             modifier = Modifier
@@ -84,7 +84,7 @@ fun PreviewScreen(
                 contentScale = ContentScale.Fit
             )
         }
-        
+
         // Action Buttons
         Row(
             modifier = Modifier
@@ -107,9 +107,9 @@ fun PreviewScreen(
                 )
                 Text("Retake")
             }
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             // Save Button
             Button(
                 onClick = {
@@ -142,16 +142,16 @@ fun PreviewScreen(
                     )
                 } else {
                     Icon(
-                        imageVector = if (isSaved) Icons.Default.Check else Icons.Default.Save,
+                        imageVector = if (isSaved) Icons.Default.Check else Icons.Default.Star,
                         contentDescription = null,
                         modifier = Modifier.padding(end = 8.dp)
                     )
                 }
                 Text(if (isSaved) "Saved!" else "Save")
             }
-            
+
             Spacer(modifier = Modifier.width(16.dp))
-            
+
             // Share Button
             Button(
                 onClick = onShare,
@@ -168,7 +168,7 @@ fun PreviewScreen(
                 Text("Share")
             }
         }
-        
+
         // Status Text
         if (isProcessing) {
             Text(

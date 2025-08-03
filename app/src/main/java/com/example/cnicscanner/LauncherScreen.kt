@@ -4,8 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -48,16 +48,16 @@ fun LauncherScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.CameraAlt,
+                    imageVector = Icons.Default.Home,
                     contentDescription = "CNIC Scanner",
                     modifier = Modifier.size(60.dp),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
         }
-        
+
         Spacer(modifier = Modifier.height(32.dp))
-        
+
         // App Title
         Text(
             text = "CNIC Scanner",
@@ -66,9 +66,9 @@ fun LauncherScreen(
             color = Color.White,
             textAlign = TextAlign.Center
         )
-        
+
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         // App Description
         Text(
             text = "Smart CNIC scanning with automatic detection and enhancement",
@@ -76,9 +76,9 @@ fun LauncherScreen(
             color = Color.White.copy(alpha = 0.9f),
             textAlign = TextAlign.Center
         )
-        
+
         Spacer(modifier = Modifier.height(48.dp))
-        
+
         // Features
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -91,21 +91,21 @@ fun LauncherScreen(
                 modifier = Modifier.padding(20.dp)
             ) {
                 FeatureItem(
-                    icon = Icons.Default.CameraAlt,
+                    icon = Icons.Default.Home,
                     title = "Auto Detection",
                     description = "Automatically detects CNIC in camera view"
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 FeatureItem(
-                    icon = Icons.Default.Description,
+                    icon = Icons.Default.Edit,
                     title = "Smart Cropping",
                     description = "Intelligently crops and enhances CNIC images"
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 FeatureItem(
                     icon = Icons.Default.Share,
                     title = "Easy Sharing",
@@ -113,9 +113,9 @@ fun LauncherScreen(
                 )
             }
         }
-        
+
         Spacer(modifier = Modifier.height(48.dp))
-        
+
         // Start Button
         Button(
             onClick = onStartScanning,
@@ -129,7 +129,7 @@ fun LauncherScreen(
             )
         ) {
             Icon(
-                imageVector = Icons.Default.CameraAlt,
+                imageVector = Icons.Default.Home,
                 contentDescription = null,
                 modifier = Modifier.padding(end = 8.dp)
             )
@@ -157,9 +157,9 @@ private fun FeatureItem(
             tint = Color.White,
             modifier = Modifier.size(24.dp)
         )
-        
+
         Spacer(modifier = Modifier.width(16.dp))
-        
+
         Column {
             Text(
                 text = title,

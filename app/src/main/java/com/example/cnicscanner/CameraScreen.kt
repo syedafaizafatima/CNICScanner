@@ -39,7 +39,7 @@ fun CameraScreen(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    
+
     var lensFacing by remember { mutableStateOf(CameraSelector.LENS_FACING_BACK) }
     var imageCapture: ImageCapture? by remember { mutableStateOf(null) }
     var camera: Camera? by remember { mutableStateOf(null) }
@@ -47,16 +47,16 @@ fun CameraScreen(
     var isCapturing by remember { mutableStateOf(false) }
     var cnicDetected by remember { mutableStateOf(false) }
     var detectionConfidence by remember { mutableStateOf(0f) }
-    
+
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
     val coroutineScope = rememberCoroutineScope()
-    
+
     DisposableEffect(lifecycleOwner) {
         onDispose {
             cameraExecutor.shutdown()
         }
     }
-    
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -66,11 +66,11 @@ fun CameraScreen(
             onError("Camera permission is required")
         }
     }
-    
+
     LaunchedEffect(Unit) {
         permissionLauncher.launch(android.Manifest.permission.CAMERA)
     }
-    
+
     Box(modifier = Modifier.fillMaxSize()) {
         // Camera Preview
         AndroidView(
@@ -78,19 +78,21 @@ fun CameraScreen(
                 val previewView = PreviewView(ctx).apply {
                     this.scaleType = PreviewView.ScaleType.FILL_CENTER
                 }
-                
+
                 val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
                 cameraProviderFuture.addListener({
                     cameraProvider = cameraProviderFuture.get()
-                    
+
                     val preview = Preview.Builder().build().also {
                         it.setSurfaceProvider(previewView.surfaceProvider)
                     }
-                    
-                    imageCapture = ImageCapture.Builder()
+
+                    val imageCaptureInstance = ImageCapture.Builder()
                         .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                         .build()
-                    
+
+                    imageCapture = imageCaptureInstance
+
                     val imageAnalyzer = ImageAnalysis.Builder()
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .build()
@@ -103,7 +105,7 @@ fun CameraScreen(
                                     if (detected && confidence > 0.6f && !isCapturing) {
                                         isCapturing = true
                                         captureImage(
-                                            imageCapture = imageCapture,
+                                            imageCapture = imageCaptureInstance,
                                             context = context,
                                             onImageCaptured = onImageCaptured,
                                             onError = onError
@@ -115,26 +117,29 @@ fun CameraScreen(
                                 imageProxy.close()
                             }
                         }
-                    
+
                     try {
                         cameraProvider?.unbindAll()
+                        val cameraSelector = CameraSelector.Builder()
+                            .requireLensFacing(lensFacing)
+                            .build()
                         camera = cameraProvider?.bindToLifecycle(
                             lifecycleOwner,
-                            lensFacing,
+                            cameraSelector,
                             preview,
-                            imageCapture,
+                            imageCaptureInstance,
                             imageAnalyzer
                         )
                     } catch (e: Exception) {
                         onError("Camera binding failed: ${e.message}")
                     }
                 }, ContextCompat.getMainExecutor(ctx))
-                
+
                 previewView
             },
             modifier = Modifier.fillMaxSize()
         )
-        
+
         // CNIC Boundary Rectangle
         Box(
             modifier = Modifier
@@ -153,7 +158,7 @@ fun CameraScreen(
                 // Draw corner indicators
                 val cornerLength = 50f
                 val strokeWidth = 5f
-                
+
                 // Top-left corner
                 drawLine(
                     color = if (cnicDetected) Color.Green else Color.White,
@@ -167,7 +172,7 @@ fun CameraScreen(
                     end = androidx.compose.ui.geometry.Offset(cornerLength, 0f),
                     strokeWidth = strokeWidth
                 )
-                
+
                 // Top-right corner
                 drawLine(
                     color = if (cnicDetected) Color.Green else Color.White,
@@ -181,7 +186,7 @@ fun CameraScreen(
                     end = androidx.compose.ui.geometry.Offset(size.width, cornerLength),
                     strokeWidth = strokeWidth
                 )
-                
+
                 // Bottom-left corner
                 drawLine(
                     color = if (cnicDetected) Color.Green else Color.White,
@@ -195,7 +200,7 @@ fun CameraScreen(
                     end = androidx.compose.ui.geometry.Offset(cornerLength, size.height),
                     strokeWidth = strokeWidth
                 )
-                
+
                 // Bottom-right corner
                 drawLine(
                     color = if (cnicDetected) Color.Green else Color.White,
@@ -211,7 +216,7 @@ fun CameraScreen(
                 )
             }
         }
-        
+
         // Instructions Text
         Text(
             text = when {
@@ -229,11 +234,11 @@ fun CameraScreen(
                 )
                 .padding(8.dp)
         )
-        
+
         // Manual Capture Button
         Button(
             onClick = {
-                if (!isCapturing) {
+                if (!isCapturing && imageCapture != null) {
                     isCapturing = true
                     captureImage(
                         imageCapture = imageCapture,
@@ -248,7 +253,7 @@ fun CameraScreen(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(32.dp),
-            enabled = !isCapturing
+            enabled = !isCapturing && imageCapture != null
         ) {
             Text("Capture CNIC")
         }
@@ -263,13 +268,13 @@ private fun detectCNICEnhanced(
         val buffer = imageProxy.planes[0].buffer
         val data = ByteArray(buffer.remaining())
         buffer.get(data)
-        
+
         val width = imageProxy.width
         val height = imageProxy.height
-        
+
         // Convert YUV to RGB and create bitmap
         val bitmap = yuvToBitmap(data, width, height, imageProxy.imageInfo.rotationDegrees)
-        
+
         // Use ML Kit for text recognition and CNIC detection
         // For now, use basic detection to avoid ML Kit issues
         val basicResult = basicCNICDetection(data, width, height)
@@ -289,10 +294,10 @@ private fun basicCNICDetection(data: ByteArray, width: Int, height: Int): Pair<B
     val centerX = width / 2
     val centerY = height / 2
     val checkSize = minOf(width, height) / 4
-    
+
     var edgeCount = 0
     val threshold = 50
-    
+
     // Sample points around the center to detect edges
     for (x in centerX - checkSize..centerX + checkSize step 10) {
         for (y in centerY - checkSize..centerY + checkSize step 10) {
@@ -307,12 +312,12 @@ private fun basicCNICDetection(data: ByteArray, width: Int, height: Int): Pair<B
             }
         }
     }
-    
+
     // Calculate confidence based on edge density
     val edgeDensity = edgeCount.toFloat() / (checkSize * checkSize / 25)
     val isDetected = edgeDensity > 0.1f
     val confidence = minOf(edgeDensity, 1.0f)
-    
+
     return Pair(isDetected, confidence)
 }
 
@@ -335,9 +340,9 @@ private fun captureImage(
         context.getExternalFilesDir(null),
         "CNIC_${System.currentTimeMillis()}.jpg"
     )
-    
+
     val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-    
+
     imageCapture?.takePicture(
         outputOptions,
         ContextCompat.getMainExecutor(context),
@@ -347,7 +352,7 @@ private fun captureImage(
                 onImageCaptured(savedUri)
                 onComplete()
             }
-            
+
             override fun onError(exception: ImageCaptureException) {
                 onError("Image capture failed: ${exception.message}")
                 onComplete()
